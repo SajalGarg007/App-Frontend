@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
-    "build:web": "expo export"
+    "build:web": "expo export --platform web"
   },
   "dependencies": {
     "@canvasjs/react-charts": "^1.0.2",
