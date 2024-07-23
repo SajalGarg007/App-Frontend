@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, Dimensions, useWindowDimensions, Button, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, Dimensions, Picker, Button, TouchableWithoutFeedback, CheckBox } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import { captureRef } from 'react-native-view-shot';
 import { BarChart, PieChart } from "react-native-gifted-charts";
@@ -17,179 +17,303 @@ const calculatePercentage = (value, total) => ((value / total) * 100).toFixed(1)
 const isDesktop = width >= 768;
 
 const Statistics = () => {
-  const [locationData, setLocationData] = useState([]);
-  const [teamsData, setTeamsData] = useState([]);
+
+  const [tabledata, setTabledata] = useState([]);
+
+    //filter useStates
+    const [selectedTeam, setSelectedTeam] = useState('');
+    const [selectedSubTeam, setSelectedSubTeam] = useState('');
+    const [selectedGender, setSelectedGender] = useState('');
+    const [selectedLocation, setSelectedLocation] = useState('');
+
+  // toolTip useState 
   const [teamsTooltipVisible, setTeamsTooltipVisible] = useState(false);
   const [costTooltipVisible, setCostTooltipVisible] = useState(false);
   const [vendorTooltipVisible, setVendorTooltipVisible] = useState(false);
   const [jobTooltipVisible, setJobTooltipVisible] = useState(false);
   const [tooltipContent, setTooltipContent] = useState('');
-  const [costData, setCostData] = useState([]);
-  const [modeData, setModeData] = useState([]);
-  const [vendorData, setVendorData] = useState([]);
-  const [joblevelData, setJoblevelData] = useState([]);
-  const [genderData, setGenderData] = useState([]);
+
+  //Image useState
   const [capturedImages, setCapturedImages] = useState({});
+  const [selectedCharts, setSelectedCharts] = useState([]);
   const chartRefs = useRef({});
-  
-  const getApiDataOperation = (result) =>{
-    
-    const tempTeams = {};
-      result.rows.forEach(employee => {
-        const teamName = employee.SubTeam.Team.name;
-        const gender = employee.gender;
 
-        if (!tempTeams[teamName]) {
-          tempTeams[teamName] = { male: 0, female: 0 };
-        }
-        if (gender === 'M') {
-          tempTeams[teamName].male++;
-        } else if (gender === 'F') {
-          tempTeams[teamName].female++;
-        }
-      });
+  //fetch api useState
+  const [Data, setData] = useState([]);
 
-      const TeamsChartData = Object.keys(tempTeams).map(team => ({
-        team: team,
-        male: tempTeams[team].male,
-        female: tempTeams[team].female,
-      })).filter(team => team.male > 0 || team.female > 0);
-      setTeamsData(TeamsChartData);
-
-
-      const tempLocation = {};
-      result.rows.forEach(employee => {
-        if (tempLocation[employee.job_location]) {
-          tempLocation[employee.job_location]++;
-        } else {
-          tempLocation[employee.job_location] = 1;
-        }
-      });
-      const lo = ['blue', 'orange'];
-      const LocationChartData = Object.keys(tempLocation).map((location, loc) => ({
-        value: tempLocation[location],
-        label: location,
-        count: tempLocation[location],
-        color: lo[loc % lo.length]
-      }));
-
-      setLocationData(LocationChartData)
-
-
-      const tempCost = {};
-      result.rows.forEach(employee => {
-        if (tempCost[employee.cost_center.cost_center]) {
-          tempCost[employee.cost_center.cost_center]++;
-        } else {
-          tempCost[employee.cost_center.cost_center] = 1;
-        }
-      });
-      const ge = ['orange'];
-      const CostChartData = Object.keys(tempCost).map((cost, gen) => ({
-        value: tempCost[cost],
-        label: cost,
-        count: tempCost[cost],
-        frontColor: ge[gen % ge.length]
-      }));
-      CostChartData.sort((a, b) => b.value - a.value)
-      setCostData(CostChartData)
-
-
-      const tempMode = {};
-      result.rows.forEach(employee => {
-        if (tempMode[employee.work_mode]) {
-          tempMode[employee.work_mode]++;
-        } else {
-          tempMode[employee.work_mode] = 1;
-        }
-      });
-      const colors = ['green', 'orange', 'blue'];
-      const ModeChartData = Object.keys(tempMode).map((mode, index) => ({
-        value: tempMode[mode],
-        label: mode,
-        count: tempMode[mode],
-        color: colors[index % colors.length]
-      }));
-
-      setModeData(ModeChartData)
-
-      const tempGender = {};
-      result.rows.forEach(employee => {
-        if (tempGender[employee.gender]) {
-          tempGender[employee.gender]++;
-        } else {
-          tempGender[employee.gender] = 1;
-        }
-      });
-
-      const GenderChartData = Object.keys(tempGender).map((gender, index) => ({
-        value: tempGender[gender],
-        label: gender,
-        count: tempGender[gender],
-        color: colors[index % colors.length]
-      }))
-      setGenderData(GenderChartData)
-
-      const tempVendor = {};
-      result.rows.forEach(employee => {
-        if (tempVendor[employee.vendor.name]) {
-          tempVendor[employee.vendor.name]++;
-        }
-        else {
-          tempVendor[employee.vendor.name] = 1;
-        }
-      });
-
-      const VendorChartData = Object.keys(tempVendor).map((vendor, gen) => ({
-        value: tempVendor[vendor],
-        label: vendor,
-        count: tempVendor[vendor],
-        frontColor: ge[gen % ge.length]
-      }));
-
-      VendorChartData.sort((a, b) => b.value - a.value)
-      setVendorData(VendorChartData);
-
-      const tempJobLevel = {};
-      result.rows.forEach(employee => {
-        if (tempJobLevel[employee.job_level]) {
-          tempJobLevel[employee.job_level]++;
-        }
-        else {
-          tempJobLevel[employee.job_level] = 1;
-        }
-      });
-
-      console.log(tempJobLevel)
-
-      const LevelChartData = Object.keys(tempJobLevel).map((level, gen) => ({
-        value: tempJobLevel[level],
-        label: level,
-        count: tempJobLevel[level],
-        frontColor: ge[gen % ge.length]
-      }));
-      LevelChartData.sort((a, b) => b.value - a.value)
-      setJoblevelData(LevelChartData);
-
-  }
+  //picker use states
+  const [filteredSubTeamsName, setFilteredSubTeamsName] = useState([]);
+  const [genders, setGenders] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [subTeams, setSubTeams] = useState([]);
 
   const getApiData = async () => {
     try {
       const response = await fetch('http://SAJAL-GARG:3001/boston/data/employees');
       const result = await response.json();
-      console.log(result);
 
-      getApiDataOperation(result);
+      const employees = result.rows;
+
+      setData(employees);
+      // let filterHome = [...employees];
+
+      const uniqueGenders = [...new Set(employees.map(emp => emp.gender))];
+      const uniqueLocations = [...new Set(employees.map(emp => emp.job_location))];
+      const uniqueTeams = [...new Set(employees.map(emp => emp.SubTeam.Team.name))];
+      const uniqueSubTeams = [...new Set(employees.map(emp => emp.SubTeam.name))];
+
+      setGenders(uniqueGenders);
+      setLocations(uniqueLocations);
+      setTeams(uniqueTeams);
+      setSubTeams(uniqueSubTeams);
+
+      getApiDataOperation(employees);
 
     } catch (error) {
-      getApiDataOperation(resultTemp);
+      getApiDataOperation(resultTemp.rows);
       console.log(error);
     }
   };
-
   useEffect(() => {
     getApiData();
   }, []);
+
+  // useStates for get api operation 
+  const [locationData, setLocationData] = useState([]);
+  const [teamsData, setTeamsData] = useState([]);
+  const [costData, setCostData] = useState([]);
+  const [modeData, setModeData] = useState([]);
+  const [vendorData, setVendorData] = useState([]);
+  const [joblevelData, setJoblevelData] = useState([]);
+  const [genderData, setGenderData] = useState([]);
+
+  const getApiDataOperation = (result) => {
+
+    const tempTeams = {};
+    result.forEach(employee => {
+      const teamName = employee.SubTeam.Team.name;
+      const gender = employee.gender;
+
+      if (!tempTeams[teamName]) {
+        tempTeams[teamName] = { male: 0, female: 0 };
+      }
+      if (gender === 'M') {
+        tempTeams[teamName].male++;
+      } else if (gender === 'F') {
+        tempTeams[teamName].female++;
+      }
+    });
+
+    const TeamsChartData = Object.keys(tempTeams).map(team => ({
+      team: team,
+      male: tempTeams[team].male,
+      female: tempTeams[team].female,
+    })).filter(team => team.male > 0 || team.female > 0);
+    setTeamsData(TeamsChartData);
+
+
+    const tempLocation = {};
+    result.forEach(employee => {
+      if (tempLocation[employee.job_location]) {
+        tempLocation[employee.job_location]++;
+      } else {
+        tempLocation[employee.job_location] = 1;
+      }
+    });
+    const lo = ['blue', 'orange'];
+    const LocationChartData = Object.keys(tempLocation).map((location, loc) => ({
+      value: tempLocation[location],
+      label: location,
+      count: tempLocation[location],
+      color: lo[loc % lo.length]
+    }));
+
+    setLocationData(LocationChartData)
+
+
+    const tempCost = {};
+    result.forEach(employee => {
+      if (tempCost[employee.cost_center.cost_center]) {
+        tempCost[employee.cost_center.cost_center]++;
+      } else {
+        tempCost[employee.cost_center.cost_center] = 1;
+      }
+    });
+    const ge = ['orange'];
+    const CostChartData = Object.keys(tempCost).map((cost, gen) => ({
+      value: tempCost[cost],
+      label: cost,
+      count: tempCost[cost],
+      frontColor: ge[gen % ge.length]
+    }));
+    CostChartData.sort((a, b) => b.value - a.value)
+    setCostData(CostChartData)
+
+
+    const tempMode = {};
+    result.forEach(employee => {
+      if (tempMode[employee.work_mode]) {
+        tempMode[employee.work_mode]++;
+      } else {
+        tempMode[employee.work_mode] = 1;
+      }
+    });
+    const colors = ['green', 'orange', 'blue'];
+    const ModeChartData = Object.keys(tempMode).map((mode, index) => ({
+      value: tempMode[mode],
+      label: mode,
+      count: tempMode[mode],
+      color: colors[index % colors.length]
+    }));
+
+    setModeData(ModeChartData)
+
+    const tempGender = {};
+    result.forEach(employee => {
+      if (tempGender[employee.gender]) {
+        tempGender[employee.gender]++;
+      } else {
+        tempGender[employee.gender] = 1;
+      }
+    });
+
+    const GenderChartData = Object.keys(tempGender).map((gender, index) => ({
+      value: tempGender[gender],
+      label: gender,
+      count: tempGender[gender],
+      color: colors[index % colors.length]
+    }))
+    setGenderData(GenderChartData)
+
+    const tempVendor = {};
+    result.forEach(employee => {
+      if (tempVendor[employee.vendor.name]) {
+        tempVendor[employee.vendor.name]++;
+      }
+      else {
+        tempVendor[employee.vendor.name] = 1;
+      }
+    });
+
+    const VendorChartData = Object.keys(tempVendor).map((vendor, gen) => ({
+      value: tempVendor[vendor],
+      label: vendor,
+      count: tempVendor[vendor],
+      frontColor: ge[gen % ge.length]
+    }));
+
+    VendorChartData.sort((a, b) => b.value - a.value)
+    setVendorData(VendorChartData);
+
+    const tempJobLevel = {};
+    result.forEach(employee => {
+      if (tempJobLevel[employee.job_level]) {
+        tempJobLevel[employee.job_level]++;
+      }
+      else {
+        tempJobLevel[employee.job_level] = 1;
+      }
+    });
+
+    const LevelChartData = Object.keys(tempJobLevel).map((level, gen) => ({
+      value: tempJobLevel[level],
+      label: level,
+      count: tempJobLevel[level],
+      frontColor: ge[gen % ge.length]
+    }));
+    LevelChartData.sort((a, b) => b.value - a.value)
+    setJoblevelData(LevelChartData);
+
+  }
+
+  useEffect(() => {
+    if (selectedTeam !== "") {
+      const subTeams = Data.filter(item => item.SubTeam.Team.name === selectedTeam)
+        .map(item => item.SubTeam.name);
+      setFilteredSubTeamsName([...new Set(subTeams)]);
+    } else {
+      setFilteredSubTeamsName([]);
+    }
+  }, [selectedTeam, Data]);
+
+  const clearFilters = () => {
+    setSelectedTeam('');
+    setSelectedSubTeam('');
+    setSelectedGender('');
+    setSelectedLocation('');
+  };
+
+  const PickerFunction = () => {
+
+    return (
+      <View style={{ flexDirection: "row", width: getPercentageWidth(96, width) }}>
+        <Picker
+          selectedValue={selectedTeam}
+          onValueChange={(itemValue) => {
+            setSelectedTeam(itemValue)
+            setSelectedSubTeam('')
+          }}
+          style={styles.deskpickerFilter}
+        >
+          <Picker.Item label="Choose Team" value="" />
+          {teams.map((team, index) => (
+            <Picker.Item key={index} label={team} value={team} />
+          ))}
+        </Picker>
+
+        <Picker
+          selectedValue={selectedGender}
+          onValueChange={(itemValue) => setSelectedGender(itemValue)}
+          style={styles.deskpickerFilter}
+        >
+          <Picker.Item label="Choose Gender" value="" />
+          {genders.map((gender, index) => (
+            <Picker.Item key={index} label={gender} value={gender} />
+          ))}
+        </Picker>
+
+
+        <Picker
+          selectedValue={selectedSubTeam}
+          onValueChange={(itemValue) => {
+            setSelectedSubTeam(itemValue)
+          }}
+          style={styles.deskpickerFilter}
+          enabled={filteredSubTeamsName.length > 0}
+        >
+          <Picker.Item label="Choose Sub Team" value="" />
+          {filteredSubTeamsName.map((subTeam, index) => (
+            <Picker.Item key={index} label={subTeam} value={subTeam} />
+          ))}
+        </Picker>
+
+        <Picker
+          selectedValue={selectedLocation}
+          onValueChange={(itemValue) => {
+            setSelectedLocation(itemValue)
+          }}
+          style={styles.deskpickerFilter}
+        >
+          <Picker.Item label="Choose Location" value="" />
+          {locations.map((location, index) => (
+            <Picker.Item key={index} label={location} value={location} />
+          ))}
+        </Picker>
+
+        
+  <TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
+      <Text style={styles.clearButtonText}>Clear Filters</Text>
+  </TouchableOpacity>
+      </View>
+    );
+
+  }
+
+  const groupedChartData = teamsData.flatMap(team => [
+    team.male > 0 ? { value: team.male, label: `${team.team} `, frontColor: 'orange' } : null,
+    team.female > 0 ? { value: team.female, label: `${team.team}`, frontColor: 'blue' } : null,
+  ]).filter(item => item !== null);
 
   //total count of each category
   let totalVendorCount = 0;
@@ -221,39 +345,40 @@ const Statistics = () => {
   for (let i = 0; i < genderData.length; i++) {
     totalGenderCount += genderData[i].count;
   }
-
-  const groupedChartData = teamsData.flatMap(team => [
-    team.male > 0 ? { value: team.male, label: `${team.team} `, frontColor: 'orange' } : null,
-    team.female > 0 ? { value: team.female, label: `${team.team}`, frontColor: 'blue' } : null,
-  ]).filter(item => item !== null);
-  console.log(groupedChartData)
-
+  // Chart Downloading
   const captureChart = async (chartName) => {
     try {
       const uri = await captureRef(chartRefs.current[chartName], {
         format: 'png',
-        quality: 0.8,
+        quality: 1,
       });
-      // console.log(uri);
       setCapturedImages((prev) => ({ ...prev, [chartName]: uri }));
     } catch (error) {
       console.log('Error capturing chart:', error);
     }
   };
 
-  const { width: screenWidth } = useWindowDimensions();
+  const toggleChartSelection = (chartName) => {
+    setSelectedCharts(prevState =>
+      prevState.includes(chartName) ? prevState.filter(name => name !== chartName) : [...prevState, chartName]
+    );
+  };
 
   const handleGeneratePdf = async () => {
-    await captureChart('teamStatsChart');
-    await captureChart('costDataChart');
-    await captureChart('locationChart');
-    await captureChart('modeChart');
-    await captureChart('vendorChart');
-    await captureChart('jobLevelChart');
-    await captureChart('genderChart');
-
-    // console.log(capturedImages);
+    const selectedChartsPromises = selectedCharts.map(chartName => captureChart(chartName));
+    await Promise.all(selectedChartsPromises);
   };
+
+
+  const PdfDocument = ({ images }) => (
+    <Document>
+      <Page style={pdfStyles.page}>
+        {selectedCharts.map(chartName => (
+          images[chartName] && <Image key={chartName} src={images[chartName]} style={pdfStyles.image} />
+        ))}
+      </Page>
+    </Document>
+  );
 
   const handleTeamsBarPress = (label) => {
     setTooltipContent(label);
@@ -295,15 +420,47 @@ const Statistics = () => {
     setJobTooltipVisible(false)
   };
 
+  const filterByChecks = (teamName, gender, subTeamName, location) => {
+
+    filterHome = [...Data]
+    // filtering data as needed  
+    if (teamName !== "") {
+      filterHome = filterHome.filter(item => item.SubTeam.Team.name === teamName);
+    } if (gender !== "") {
+      filterHome = filterHome.filter(item => item.gender === gender);
+    }
+    if (subTeamName !== "") {
+      filterHome = filterHome.filter(item => item.SubTeam.name === subTeamName);
+    } if (location !== "") {
+      filterHome = filterHome.filter(item => item.job_location === location);
+    }
+    return filterHome;
+  }
+
+ 
+
+  useEffect(() => {
+    const filteredData = filterByChecks(selectedTeam, selectedGender, selectedSubTeam, selectedLocation);
+    getApiDataOperation(filteredData);
+
+  }, [selectedTeam, selectedGender, selectedSubTeam, selectedLocation, Data]);
+
+
   return (
     <TouchableWithoutFeedback onPress={handleOutsidePress}>
+
       <ScrollView>
         <ScrollView horizontal={false}>
           <SafeAreaView style={styles.container}>
             {isDesktop ? (
+
               <View style={styles.desktopContainer}>
-                {/* // */}
+                <PickerFunction />
                 <View style={styles.row}>
+                  <CheckBox
+                    value={selectedCharts.includes('teamStatsChart')}
+                    onValueChange={() => toggleChartSelection('teamStatsChart')}
+                  />
                   <View style={{
                     padding: 20,
                     width: getPercentageWidth(91, width),
@@ -348,16 +505,19 @@ const Statistics = () => {
                         </View>
                       )}
                     />
-
                     <Text style={styles.categoryHeader}>Teams Wise Gender Diversity</Text>
-
                   </View>
                 </View>
 
 
                 <View style={styles.row}>
                   {/*  */}
+                  <CheckBox
+                    value={selectedCharts.includes('vendorChart')}
+                    onValueChange={() => toggleChartSelection('vendorChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.vendorChart = ref)}>
+
                     <BarChart
                       frontColor={'#177AD5'}
                       width={getPercentageWidth(38, width)}
@@ -374,8 +534,12 @@ const Statistics = () => {
                     <Text style={styles.categoryHeader}>Vendor </Text>
 
                   </View>
-                  {/* ref={(ref) => (chartRefs.current.jobLevelChart = ref)} */}
+                  <CheckBox
+                    value={selectedCharts.includes('jobLevelChart')}
+                    onValueChange={() => toggleChartSelection('jobLevelChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.jobLevelChart = ref)}>
+
                     <BarChart
                       frontColor={'#177AD5'}
                       width={getPercentageWidth(38, width)}
@@ -394,15 +558,19 @@ const Statistics = () => {
                   </View>
                 </View>
                 <View style={styles.row}>
-
+                  <CheckBox
+                    value={selectedCharts.includes('costDataChart')}
+                    onValueChange={() => toggleChartSelection('costDataChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.costDataChart = ref)}>
+
                     <BarChart
                       data={costData}
                       width={getPercentageWidth(38, width)}
                       height={300}
                       barWidth={getPercentageWidth(2.2, width)}
                       spacing={getPercentageWidth(1.5, width)}
-                      showLegend
+                      // showLegend
                       showValuesAsTopLabel={true}
                       onPress={(item) => handleCostBarPress(item.label)}
                       renderTooltip={() => costTooltipVisible && (
@@ -414,17 +582,20 @@ const Statistics = () => {
                     <Text style={styles.categoryHeader}>Cost Center </Text>
 
                   </View>
-
+                  <CheckBox
+                    value={selectedCharts.includes('genderChart')}
+                    onValueChange={() => toggleChartSelection('genderChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.genderChart = ref)} >
+
                     <PieChart
                       data={genderData}
                       width={300}
                       height={300}
                       radius={120}
-                      isAnimated
-                      animationDuration={500}
                       showValuesAsLabels={true}
                       labelsPosition='outward'
+                      focusOnPress={true}
                       showText={true}
                     />
                     <Text style={styles.categoryHeader}>Gender Diversity</Text>
@@ -434,7 +605,12 @@ const Statistics = () => {
                   </View>
                 </View>
                 <View style={styles.row}>
+                  <CheckBox
+                    value={selectedCharts.includes('locationChart')}
+                    onValueChange={() => toggleChartSelection('locationChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.locationChart = ref)}>
+
                     <PieChart
                       data={locationData}
                       width={300}
@@ -451,8 +627,12 @@ const Statistics = () => {
                       <Text key={index} style={styles.categoryItem}>{location.label} : {location.count} ({calculatePercentage(location.count, totalLocationCount)}%)</Text>
                     ))}
                   </View>
-                  {/* ref={(ref) => (chartRefs.current.teamsChart = ref)} */}
+                  <CheckBox
+                    value={selectedCharts.includes('modeChart')}
+                    onValueChange={() => toggleChartSelection('modeChart')}
+                  />
                   <View style={styles.desktopChart} ref={(ref) => (chartRefs.current.modeChart = ref)}>
+
                     <PieChart
                       data={modeData}
                       width={300}
@@ -466,16 +646,17 @@ const Statistics = () => {
                     />
                     <Text style={styles.categoryHeader}>Work Mode </Text>
                     {modeData.map((mode, index) => (
-                      <Text key={index} style={styles.categoryItem}>{mode.label} : {mode.count} ({calculatePercentage(mode.count, totalModeCount)}%)</Text>
+                      <Text key={index} style={styles.categoryItem}>{mode.label} : {mode.count}
+                        ({calculatePercentage(mode.count, totalModeCount)}%)</Text>
                     ))}
                   </View>
                 </View>
                 <View style={{ marginBottom: 5 }}>
-                  <Button title="Generate PDF" onPress={handleGeneratePdf} color="#086A96"/>
-                  {capturedImages.teamStatsChart && (
+                  <Button title="Generate PDF" onPress={handleGeneratePdf} color="#086A96" />
+                  {Object.keys(capturedImages).length > 0 && (
                     <PDFDownloadLink
                       document={<PdfDocument images={capturedImages} />}
-                      fileName="charts.pdf"
+                      fileName="selected_charts.pdf"
                     >
 
                       {({ loading }) => (loading ? 'Loading document...' : 'Download PDF')}
@@ -562,7 +743,6 @@ const Statistics = () => {
                   <Text style={styles.categoryHeader}>Vendor</Text>
 
                 </View>
-                {/* ref={(ref) => (chartRefs.current.jobLevelChart = ref)} */}
                 <View style={styles.chart} ref={(ref) => (chartRefs.current.jobLevelChart = ref)}>
                   <BarChart
                     frontColor={'#177AD5'}
@@ -599,7 +779,6 @@ const Statistics = () => {
                     <Text key={index} style={styles.categoryItem}>{location.label} : {location.count} ({calculatePercentage(location.count, totalLocationCount)}%)</Text>
                   ))}
                 </View>
-                {/* ref={(ref) => (chartRefs.current.teamsChart = ref)} */}
                 <View style={styles.chart} ref={(ref) => (chartRefs.current.modeChart = ref)}>
                   <PieChart
                     data={modeData}
@@ -657,29 +836,7 @@ const Statistics = () => {
   );
 }
 
-const PdfDocument = ({ images }) => (
-  <Document>
-    <Page style={pdfStyles.page1}>
-      {images.teamStatsChart && <Image src={images.teamStatsChart} style={isDesktop ? (pdfStyles.imageDex) : (pdfStyles.image3)} />}
-      {images.costDataChart && <Image src={images.costDataChart} style={isDesktop ? (pdfStyles.imageDex) : (pdfStyles.image3)} />}
-      {images.vendorChart && <Image src={images.vendorChart} style={isDesktop ? (pdfStyles.imageDex) : (pdfStyles.image)} />}
-      {images.jobLevelChart && <Image src={images.jobLevelChart} style={isDesktop ? (pdfStyles.imageDex) : (pdfStyles.image)} />}
 
-      {/* {images.teamsChart && <Image src={images.teamsChart} style={pdfStyles.image} />}
-      {images.vendorChart && <Image src={images.vendorChart} style={pdfStyles.image} />}
-      {images.jobLevelChart && <Image src={images.jobLevelChart} style={pdfStyles.image} />} */}
-    </Page>
-    <Page style={pdfStyles.page}>
-      {/* {images.genderChart && <Image src={images.genderChart} style={pdfStyles.image} />}
-      {images.modeChart && <Image src={images.modeChart} style={pdfStyles.image} />}
-      {images.locationChart && <Image src={images.locationChart} style={pdfStyles.image} />} */}
-      {images.genderChart && <Image src={images.genderChart} style={isDesktop ? (pdfStyles.image2Dex) : (pdfStyles.image2)} />}
-      {images.modeChart && <Image src={images.modeChart} style={isDesktop ? (pdfStyles.image2Dex) : (pdfStyles.image2)} />}
-      {images.locationChart && <Image src={images.locationChart} style={isDesktop ? (pdfStyles.image2Dex) : (pdfStyles.image2)} />}
-
-    </Page>
-  </Document>
-);
 
 const pdfStyles = PdfStyles.create({
   page1: {
@@ -720,6 +877,19 @@ const pdfStyles = PdfStyles.create({
 });
 
 const styles = StyleSheet.create({
+  deskpickerFilter: {
+    // position:'absolute',
+    height: 25,
+    fontSize: 12,
+    color: "black",
+    marginBottom: 20,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    marginLeft: getPercentageWidth(1, width),
+    backgroundColor: "white",
+    borderWidth: 1,
+    width: getPercentageWidth(10, width)
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -742,6 +912,22 @@ const styles = StyleSheet.create({
     marginBottom: -40
 
   },
+  clearButton: {
+		backgroundColor: '#086A96',
+		borderRadius: 5,
+		height: 25,
+		marginBottom: 20,
+		paddingHorizontal: 10,
+		borderRadius: 5,
+		marginLeft: getPercentageWidth(1, width),
+		borderWidth: 1,
+		width: getPercentageWidth(8, width)
+
+	},
+	clearButtonText: {
+		color: 'white',
+		fontWeight: 'bold',
+	},
   tooltipText: {
     color: 'white',
   },

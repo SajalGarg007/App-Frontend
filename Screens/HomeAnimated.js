@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { useEffect, useRef } from 'react'
-import { Platform, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Platform, SafeAreaView, StyleSheet, Text,Dimensions, TouchableOpacity, View } from 'react-native'
 import Icon, { Icons } from './colors/Icons';
 import Colors from './colors/Colors';
 import ColorScreen from './colors/ColorScreen';
@@ -12,11 +12,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Entypo } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
+const { width, height } = Dimensions.get('window');
+const isDesktop = width >= 768;
+
 const TabArr = [
   { route: ' ', label: 'Employee', type: Icons.Ionicons, activeIcon: 'grid', inActiveIcon: 'grid-outline', component: Employee },
   { route: '  ', label: 'Department', type: Icons.MaterialCommunityIcons, activeIcon: 'timeline-plus', inActiveIcon: 'timeline-plus-outline', component:Department },
   { route: '   ', label: 'Stats', type: Icons.MaterialCommunityIcons, activeIcon: 'graph', inActiveIcon: 'graph-outline', component: Statistics },
-  // { route: 'Account', label: 'Account', type: Icons.FontAwesome, activeIcon: 'user-circle', inActiveIcon: 'user-circle-o', component: ColorScreen },
 ];
 
 const Tab = createBottomTabNavigator();
@@ -63,7 +65,7 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1 }}>
       <Tab.Navigator
         screenOptions={{
-          headerShown: true,
+          headerShown: isDesktop? false:true,
           tabBarStyle: {
             backgroundColor:'white',
             height: 60,
@@ -72,8 +74,6 @@ export default function HomeScreen() {
             // borderRadius: 16,
             borderTopRightRadius:16,
             borderTopLeftRadius:16,
-            // justifyContent: 'center',
-            // alignItems: 'center',
           }
         }}
       >
@@ -89,13 +89,11 @@ export default function HomeScreen() {
         })}
       </Tab.Navigator>
 
-      <TouchableOpacity style={styles.icon} onPress={Jump}>
+      {/* <TouchableOpacity style={styles.icon} onPress={Jump}>
                 <MaterialCommunityIcons name="account-circle-outline" size={40} color="black" />
-            </TouchableOpacity>
-            <Text style={styles.user}>Welcome Sanjeev!</Text>
-            {/* <TouchableOpacity onPress={()=>setModalVisible(true)} style={styles.icon2}>
-				<MaterialCommunityIcons name='pencil-plus-outline' size={40}color='black'/>
-				</TouchableOpacity> */}
+            </TouchableOpacity> */}
+            {isDesktop?null:<Text style={styles.user}>Welcome User!</Text>}
+            
     </SafeAreaView>
   )
 }
@@ -126,47 +124,3 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     }
 })
-
-/* 
-//desktop view
-          <StackedBarChart
-          data={{
-            labels: labels,
-            legend: ['Males', 'Females'],
-            data: data,
-            barColors: ['#FFA726', '#66BB6A'],
-          }}
-          width={getPercentageWidth(43  , width)} 
-          height={400}
-          chartConfig={{
-            backgroundColor: '#FFFFFF',
-            backgroundGradientFrom: '#FFFFFF',
-            backgroundGradientTo: '#FFFFFF',
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-            style: {
-              borderRadius: 16,
-            },
-            barPercentage: .6, // Adjust bar width relative to available space
-  categoryPercentage: 0.7, 
-            propsForBackgroundLines: {
-              strokeDasharray: '', // solid background lines with no dashes
-              strokeWidth: 0.5,
-              stroke: '#E3E3E3',
-            },
-            propsForLabels: {
-              fontSize: 8,
-              fontWeight: 'bold',
-              color: '#000',
-            },
-          }}
-          showLegend={true}
-          showValuesOnTopOfBars={true}
-        />
-
-        const data = teamsData.map(team => [
-          team.male !== 0 ? team.male : null, 
-          team.female !== 0 ? team.female : null
-        ]);
-*/

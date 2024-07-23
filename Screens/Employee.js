@@ -1,10 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-// import * as React from 'react';
 import React, { useState, useEffect } from "react";
-import {
-	View, Text, TextInput, TouchableOpacity, ScrollView, FlatList, StyleSheet, Modal,
-	KeyboardAvoidingView, Picker, Dimensions, Alert, ActivityIndicator
-} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, ScrollView, FlatList, StyleSheet, Modal, KeyboardAvoidingView, Picker, Dimensions, Alert, ActivityIndicator } from "react-native";
 import UserAvatar from 'react-native-user-avatar';
 import Tooltip from 'rn-tooltip';
 import { Button, FAB, Portal, Provider, Dialog } from 'react-native-paper';
@@ -31,7 +27,6 @@ const Employee = () => {
 		const [expanded, setExpanded] = useState(false);
 		const toggleExpand = () => {
 			setExpanded(!expanded);
-			// console.log("Item :",item);				// expandable list function
 		};
 
 		const truncatedDesignation = item.designation.name.length > 20
@@ -50,6 +45,7 @@ const Employee = () => {
 			{ label: 'Cost Center', value: item.cost_center.cost_center },
 			{ label: 'Employee Id', value: item.employee_id },
 			{ label: 'Gender', value: item.gender },
+			{ label: 'Functional Head', value: item.functional_head.name },
 		];
 
 
@@ -115,50 +111,64 @@ const Employee = () => {
 
 		const headers = [
 			'First Name', 'Last Name', 'Employment Type', 'Employee ID',
-			'Designation', 'Reporting Manager', 'Vendor', 'Team', 'Sub Team',
+			'Designation', 'Reporting Manager', 'Functional Head', 'Vendor', 'Team', 'Sub Team',
 			'Location', 'Work Mode', 'Job Level', 'Cost Center',
 			, 'Gender', ''
 		];
 
-		const [selectedTeam, setSelectedTeam] = useState(''); 
-		const [selectedSubTeam, setSelectedSubTeam] = useState(''); 
-		const [selectedGender, setSelectedGender] = useState(''); 
-		const [selectedLocation, setSelectedLocation] = useState(''); 
+		const [selectedTeam, setSelectedTeam] = useState('');
+		const [selectedSubTeam, setSelectedSubTeam] = useState('');
+		const [selectedGender, setSelectedGender] = useState('');
+		const [selectedLocation, setSelectedLocation] = useState('');
 		const [filteredSubTeamsName, setFilteredSubTeamsName] = useState([]);
+		const [selectedHead, setSelectedHead] = useState('');
 
-		const filterByChecks = (teamName,gender,subTeamName,location) =>{
-			
+
+		const filterByChecks = (teamName, gender, subTeamName, location, funHead) => {
+			//whole data without filter
 			filterHome = [...Data]
-			if(teamName !== ""){
-				filterHome = filterHome.filter(item => item.SubTeam.Team.name ===teamName);
-			}if(gender !== ""){
-				filterHome=  filterHome.filter(item => item.gender ===gender);
+			// filtering data as needed
+			if (teamName !== "") {
+				filterHome = filterHome.filter(item => item.SubTeam.Team.name === teamName);
+			} if (gender !== "") {
+				filterHome = filterHome.filter(item => item.gender === gender);
 			}
-			if(subTeamName !== ""){
-				filterHome=  filterHome.filter(item => item.SubTeam.name ===subTeamName);
-			}if(location !== ""){
-				filterHome=  filterHome.filter(item => item.job_location ===location);
+			if (subTeamName !== "") {
+				filterHome = filterHome.filter(item => item.SubTeam.name === subTeamName);
+			} if (location !== "") {
+				filterHome = filterHome.filter(item => item.job_location === location);
+			} if (funHead !== "") {
+				filterHome = filterHome.filter(item => item.functional_head.name === funHead);
 			}
 			return filterHome;
-	}
-
-	useEffect(() => {
-		if (selectedTeam !== "") {
-		  const subTeams = Data.filter(item => item.SubTeam.Team.name === selectedTeam)
-							  .map(item => item.SubTeam.name);
-		  setFilteredSubTeamsName([...new Set(subTeams)]); 
-		} else {
-		  setFilteredSubTeamsName([]); 
 		}
-	  }, [selectedTeam, Data]);
 
-		const tableData = filterByChecks(selectedTeam,selectedGender,selectedSubTeam,selectedLocation).map((item) => ([
+		useEffect(() => {
+			if (selectedTeam !== "") {
+				const subTeams = Data.filter(item => item.SubTeam.Team.name === selectedTeam)
+					.map(item => item.SubTeam.name);
+				setFilteredSubTeamsName([...new Set(subTeams)]);
+			} else {
+				setFilteredSubTeamsName([]);
+			}
+		}, [selectedTeam, Data]);
+
+		const clearFilters = () => {
+			setSelectedTeam('');
+			setSelectedSubTeam('');
+			setSelectedGender('');
+			setSelectedLocation('');
+			setSelectedHead('');
+		};
+
+		const tableData = filterByChecks(selectedTeam, selectedGender, selectedSubTeam, selectedLocation, selectedHead).map((item) => ([
 			item.first_name,
 			item.last_name,
 			item.employeement_type,
 			item.employee_id,
 			item.designation.name,
 			item.reportingManager ? `${item.reportingManager.first_name} ${item.reportingManager.last_name}` : 'N.A',
+			item.functional_head.name,
 			item.vendor.name,
 			item.SubTeam.Team.name,
 			item.SubTeam.name,
@@ -168,16 +178,13 @@ const Employee = () => {
 			item.cost_center.cost_center,
 			item.gender,
 			null
-		  ]));
-
-		  console.log("Filtering:" ,filterHome)
-		  console.log("Table data:" , tableData)
+		]));
 
 		useEffect(() => {
 			setTimeout(() => {
 				setLoading(false);
-			}, 1000); 
-		}, []);	
+			}, 1000);
+		}, []);
 
 		if (loading) {
 			return (
@@ -187,108 +194,128 @@ const Employee = () => {
 			);
 		}
 
-	
-		  return (
+
+		return (
 			<ScrollView showsVerticalScrollIndicator={true} >
-			  <ScrollView horizontal={false} showsHorizontalScrollIndicator={false}>
-				<View style={styles.containerDesk}>
-						<View style={{flexDirection:"row"}}>
-						  <Picker
-							  selectedValue={selectedTeam}
-							  onValueChange={(itemValue) => {
-								setSelectedTeam(itemValue)
-								setSelectedSubTeam('')
-							  }}
-							  style={styles.deskpicker}
-						  >
-							  <Picker.Item label="Choose Team" value="" />
-							  {teams.map((team, index) => (
-								  <Picker.Item key={index} label={team} value={team} />
-							  ))}
-						  </Picker>
+				<ScrollView horizontal={false} showsHorizontalScrollIndicator={false}>
+					<View style={styles.containerDesk}>
+						<View style={{ flexDirection: "row", width: getPercentageWidth(96, width) }}>
+							<Picker
+								selectedValue={selectedTeam}
+								onValueChange={(itemValue) => {
+									setSelectedTeam(itemValue)
+									setSelectedSubTeam('')
+								}}
+								style={styles.deskpickerFilter}
+							>
+								<Picker.Item label="Choose Team" value="" />
+								{teams.map((team, index) => (
+									<Picker.Item key={index} label={team} value={team} />
+								))}
+							</Picker>
 
-						  <Picker
-							  selectedValue={selectedGender}
-							  onValueChange={(itemValue) => setSelectedGender(itemValue)}
-							  style={styles.deskpicker}
-						  >
-							  <Picker.Item label="Choose Gender" value="" />
-							  {genders.map((gender, index) => (
-								  <Picker.Item key={index} label={gender} value={gender} />
-							  ))}
-						  </Picker>
+							<Picker
+								selectedValue={selectedGender}
+								onValueChange={(itemValue) => setSelectedGender(itemValue)}
+								style={styles.deskpickerFilter}
+							>
+								<Picker.Item label="Choose Gender" value="" />
+								{genders.map((gender, index) => (
+									<Picker.Item key={index} label={gender} value={gender} />
+								))}
+							</Picker>
 
-						  
-						  <Picker
-							  selectedValue={selectedSubTeam}
-							  onValueChange={(itemValue) => {
-								setSelectedSubTeam(itemValue)
-								// setSelectedGender('')
-							  }}
-							  style={styles.deskpicker}
-							  enabled={filteredSubTeamsName.length > 0} 
-						  >
-							  <Picker.Item label="Choose Sub Team" value="" />
-							  {filteredSubTeamsName.map((subTeam, index) => (
-								  <Picker.Item key={index} label={subTeam} value={subTeam} />
-							  ))}
-						  </Picker>
 
-						  <Picker
-							  selectedValue={selectedLocation}
-							  onValueChange={(itemValue) => {
-								setSelectedLocation(itemValue)
-								// setSelectedGender('')
-							  }}
-							  style={styles.deskpicker}
-						  >
-							  <Picker.Item label="Choose Location" value="" />
-							  {locations.map((location, index) => (
-								  <Picker.Item key={index} label={location} value={location} />
-							  ))}
-						  </Picker>
-					</View>
-				  <Table borderStyle={{  borderColor: 'white' }}>
-					<Row data={headers} style={styles.head} textStyle={styles.text1} />
-					{
-					  tableData.map((rowData, index) => (
-						<View key={index}>
-						<TableWrapper key={index} style={styles.rowWrapper}>
-						  {rowData.map((cellData, cellIndex) => (
-							<View key={cellIndex} style={styles.cell}>
-								 {cellIndex === 4 ? (
-                          <Tooltip popover={<Text>{cellData}</Text>}>
-                            <Text style={styles.text}>{cellData}</Text>
-                          </Tooltip>
-                        ) : cellIndex === 14 ? (
-								<Button icon="pencil" textColor="white" buttonColor="#086A96" mode="elevated" compact="true" onPress={() => editEmployee(index)}/>
-							  ) : (
-								<Text style={styles.text}>{cellData}</Text>
-							  )}
-							</View>
-						  ))}
-						</TableWrapper>
-						<Divider style={{marginHorizontal:2}} />
+							<Picker
+								selectedValue={selectedSubTeam}
+								onValueChange={(itemValue) => {
+									setSelectedSubTeam(itemValue)
+									// setSelectedGender('')
+								}}
+								style={styles.deskpickerFilter}
+								enabled={filteredSubTeamsName.length > 0}
+							>
+								<Picker.Item label="Choose Sub Team" value="" />
+								{filteredSubTeamsName.map((subTeam, index) => (
+									<Picker.Item key={index} label={subTeam} value={subTeam} />
+								))}
+							</Picker>
+
+							<Picker
+								selectedValue={selectedLocation}
+								onValueChange={(itemValue) => {
+									setSelectedLocation(itemValue)
+									// setSelectedGender('')
+								}}
+								style={styles.deskpickerFilter}
+							>
+								<Picker.Item label="Choose Location" value="" />
+								{locations.map((location, index) => (
+									<Picker.Item key={index} label={location} value={location} />
+								))}
+							</Picker>
+
+							<Picker
+								selectedValue={selectedHead}
+								onValueChange={(itemValue) => {
+									setSelectedHead(itemValue)
+									// setSelectedGender('')
+								}}
+								style={styles.deskpickerFilter}
+							>
+								<Picker.Item label="Choose Functional Head" value="" />
+								{head.map((head, index) => (
+									<Picker.Item key={index} label={head} value={head} />
+								))}
+							</Picker>
+
+							<TouchableOpacity onPress={clearFilters} style={styles.clearButton}>
+								<Text style={styles.clearButtonText}>Clear Filters</Text>
+							</TouchableOpacity>
 						</View>
-					  ))
-					}
-				  </Table>
-				</View>
-			  </ScrollView>
+
+						<Table borderStyle={{ borderColor: 'white' }}>
+							<Row data={headers} style={styles.head} textStyle={styles.text1} />
+							{
+								tableData.map((rowData, index) => (
+									<View key={index}>
+										<TableWrapper key={index} style={styles.rowWrapper}>
+											{rowData.map((cellData, cellIndex) => (
+												<View key={cellIndex} style={styles.cell}>
+													{cellIndex === 4 ? (
+														<Tooltip popover={<Text>{cellData}</Text>}>
+															<Text style={styles.text}>{cellData}</Text>
+														</Tooltip>
+													) : cellIndex === 15 ? (
+														<Button icon="pencil" textColor="white" buttonColor="#086A96" mode="elevated" compact="true" onPress={() => editEmployee(index)} />
+													) : (
+														<Text style={styles.text}>{cellData}</Text>
+													)}
+												</View>
+											))}
+										</TableWrapper>
+										<Divider style={{ marginHorizontal: 2 }} />
+									</View>
+								))
+							}
+						</Table>
+					</View>
+				</ScrollView>
 			</ScrollView>
-		  );
-		};
+		);
+	};
 	const [loading, setLoading] = useState(true);
 	const [Data, setData] = useState([]);
 	const [index, setIndex] = useState([]);
-	const [filteredSubTeams, setFilteredSubTeams] = useState([]);
 	const [genders, setGenders] = useState([]);
-	const [empTypes, setEmpTypes] = useState([]);
+	const [filteredSubTeams, setFilteredSubTeams] = useState([]);
 	const [locations, setLocations] = useState([]);
-	const [modes, setModes] = useState([]);
-	const [vendors, setVendors] = useState([]);
 	const [teams, setTeams] = useState([]);
 	const [subTeams, setSubTeams] = useState([]);
+	const [empTypes, setEmpTypes] = useState([]);
+	const [modes, setModes] = useState([]);
+	const [vendors, setVendors] = useState([]);
+	const [head, setHead] = useState([]);
 	const [levels, setLevels] = useState([]);
 	const [costs, setCosts] = useState([]);
 	const [repMan, setRepMan] = useState([]);
@@ -304,6 +331,7 @@ const Employee = () => {
 		employeement_type: '',
 		designation: '',
 		reporting_manager: '',
+		functional_head: '',
 		vendor: '',
 		team: '',
 		sub_team: '',
@@ -325,7 +353,6 @@ const Employee = () => {
 
 	const findTeamUUIDByName = (name) => {
 		const ans = Data.find(emp => emp.SubTeam.Team.name === name);
-		console.log(ans);
 		return ans ? ans.SubTeam.Team.id : null;
 	};
 
@@ -344,12 +371,14 @@ const Employee = () => {
 		return ans ? ans.cost_center.id : null;
 	};
 
+	const findFunctionalHeadUUIDByName = (name) => {
+		const ans = Data.find(emp => emp.functional_head.name === name);
+		return ans ? ans.functional_head.id : null;
+	};
+
 	const findReportingManUUIDByName = (name) => {
 
 		const ans = Data.find(emp => `${emp.first_name} ${emp.last_name}` === name);
-		console.log(`${ans.first_name} ${ans.last_name}`);
-		console.log(ans.id);
-		// return ans.reportingManager.id;
 		return ans ? ans.id : null;
 	};
 
@@ -358,8 +387,6 @@ const Employee = () => {
 	const handleAddEmployee = () => {
 
 		let employeeDel = newEmployee;
-		console.log(employeeDel);
-		console.log(employeeDel.vendor);
 
 		if (isNumberWithLength(!newEmployee.employee_id, 7)) {
 			setNotifyText("Employee ID must be a 7 digits number");
@@ -374,12 +401,12 @@ const Employee = () => {
 		const emp_SubTeam = findSubTeamUUIDByName(employeeDel.sub_team);
 		const emp_designation = findDesignationUUIDByName(employeeDel.designation);
 		const emp_CostCenter = findCostCenterUUIDByName(employeeDel.cost_center);
+		const emp_FunctionalHead = findFunctionalHeadUUIDByName(employeeDel.functional_head);
+
 		let emp_reportingMan = null;
 		if (employeeDel.reporting_manager) {
 			emp_reportingMan = findReportingManUUIDByName(employeeDel.reporting_manager);
-			console.log(emp_reportingMan);
 		}
-		console.log(emp_vendor);
 
 		const url = 'http://SAJAL-GARG:3001/boston/data/add/employee';
 		const data = {
@@ -388,6 +415,7 @@ const Employee = () => {
 			"last_name": `${employeeDel.last_name}`,
 			"employee_type": `${employeeDel.employeement_type}`,
 			"Reporting_manager_id": `${emp_reportingMan}`,
+			"functional_head_id": `${emp_FunctionalHead}`,
 			"Designation_id": `${emp_designation}`,
 			"Vendor_id": `${emp_vendor}`,
 			"Team_id": `${emp_team}`,
@@ -408,12 +436,9 @@ const Employee = () => {
 		})
 			.then(response => response.json())
 			.then(data => {
-				console.log(data);
 				if (data.message === "Internal server error") {
-					// alert("Employee ID already exist");
 					setNotifyText("Employee ID already exist");
 					setNotifyVisible(true);
-					console.log("consoling filterdata index", filteredData[index]);
 					setModalVisible(true);
 					setEditMode(false);
 					return;
@@ -421,7 +446,6 @@ const Employee = () => {
 				else {
 					setNotifyText(data.message);
 					setNotifyVisible(true);
-					// alert(data.message);
 				}
 
 			})
@@ -438,6 +462,7 @@ const Employee = () => {
 			employeement_type: '',
 			designation: '',
 			reporting_manager: '',
+			functional_head: '',
 			vendor: '',
 			team: '',
 			sub_team: '',
@@ -456,24 +481,9 @@ const Employee = () => {
 
 	const handleEditEmployee = (update) => {
 
-		console.log("consoling update");
-		console.log(update);
-
-		console.log(filteredData[index].first_name);
-		// if(loginPerson.group === superGroup)
-		// {
-		// 	jump:label;
-		// }
-		// if(!filteredData[index].functional_head === LoginPerson.name)
-		// {
-		// 	alert();
-		// 	return;
-		// }
-		// label;
 		if (!isNumberWithLength(newEmployee.employee_id, 7)) {
 			setNotifyText("Employee ID must be a 7 digits number");
 			setNotifyVisible(true);
-			// alert("employee id must be of 7 digit number");
 			setModalVisible(true);
 			return;
 		}
@@ -483,12 +493,12 @@ const Employee = () => {
 		const edited_SubTeam = findSubTeamUUIDByName(update.sub_team);
 		const edited_designation = findDesignationUUIDByName(update.designation);
 		const edited_CostCenter = findCostCenterUUIDByName(update.cost_center);
+		const edited_FunctionalHead = findFunctionalHeadUUIDByName(update.functional_head);
+
 		let edited_reportingMan = null;
 		if (update.reporting_manager) {
 			edited_reportingMan = findReportingManUUIDByName(update.reporting_manager);
-			console.log(edited_reportingMan);
 		}
-		console.log(edited_vendor);
 
 		const url = `http://SAJAL-GARG:3001/boston/data/edit/employee/${filteredData[index].employee_id}`;
 		const data = {
@@ -497,6 +507,7 @@ const Employee = () => {
 			"last_name": `${update.last_name}`,
 			"employee_type": `${update.employeement_type}`,
 			"Reporting_manager_id": `${edited_reportingMan}`,
+			"functional_head_id": `${edited_FunctionalHead}`,
 			"Designation_id": `${edited_designation}`,
 			"Vendor_id": `${edited_vendor}`,
 			"Team_id": `${edited_team}`,
@@ -517,19 +528,15 @@ const Employee = () => {
 		})
 			.then(response => response.json())
 			.then(data => {
-				console.log(data);
 				if (data.message === "Internal server error") {
 					setNotifyText("Employee ID already exist");
 					setNotifyVisible(true);
-
-					console.log("consoling filterdata index", filteredData[index]);
 					editEmployee(index);
 					return;
 				}
 				else {
 					setNotifyText(data.message);
 					setNotifyVisible(true);
-					// alert(data.message);
 				}
 
 				Alert.alert('Success', 'Employee data added successfully');
@@ -538,8 +545,6 @@ const Employee = () => {
 				console.error('Error:', error);
 				setNotifyText("Failed to add employee data");
 				setNotifyVisible(true);
-
-				// alert('Error', 'Failed to add employee data');
 			});
 
 
@@ -550,6 +555,7 @@ const Employee = () => {
 			employeement_type: '',
 			designation: '',
 			reporting_manager: '',
+			functional_head: '',
 			vendor: '',
 			team: '',
 			sub_team: '',
@@ -568,7 +574,6 @@ const Employee = () => {
 	const [confirmationText, setConfirmationText] = useState('');
 
 	const NotDeleted = () => {
-		// console.log("not delete function");
 		setNotifyText("Employee is not deleted");
 		setNotifyVisible(true);
 		setConfirmationVisible(false);
@@ -576,7 +581,6 @@ const Employee = () => {
 		setEditMode(true);
 	}
 
-	//{visibleDelete, hideDialogDelete, text}
 	const Confirmation = () => {
 
 		return (
@@ -587,7 +591,6 @@ const Employee = () => {
 				}}>
 					<Dialog.ScrollArea>
 						<ScrollView contentContainerStyle={{ paddingHorizontal: 24 }}>
-							{console.log("consoling width", width)}
 							<Text>{confirmationText}</Text>
 						</ScrollView>
 					</Dialog.ScrollArea>
@@ -615,7 +618,6 @@ const Employee = () => {
 		})
 			.then(response => response.json())
 			.then(data => {
-				console.log(data);
 				setNotifyText(data.message);
 				setNotifyVisible(true);
 				Alert.alert('Success', 'Employee data added successfully');
@@ -631,7 +633,6 @@ const Employee = () => {
 	const transformXLData = (data) => {
 		return data.map(item => {
 			return {
-				// id: item.id,
 				first_name: item.first_name,
 				last_name: item.last_name,
 				employee_id: item.employee_id,
@@ -640,26 +641,17 @@ const Employee = () => {
 				work_mode: item.work_mode,
 				job_location: item.job_location,
 				job_level: item.job_level,
-				// designation_id: item.designation.id,
 				designation_name: item.designation.name,
-				// cost_center_id: item.cost_center.id,
 				cost_center: item.cost_center.cost_center,
 				vendor_name: item.vendor.name,
-				// vendor_id: item.vendor.id,
 				subteam_name: item.SubTeam.name,
-				// subteam_id: item.SubTeam.id,
-				// team_id: item.SubTeam.team_id,
 				team_name: item.SubTeam.Team.name,
-				// team_description: item.SubTeam.Team.description,
-				// team_active: item.SubTeam.Team.active,
-				// team_head: item.SubTeam.Team.head,
-				// location: item.location,
+				functional_head: item.functional_head.name,
 				reportingManager: item.reportingManager ? (`${item.reportingManager.first_name} ${item.reportingManager.last_name}`) : ("N.A"),
-				// reportingManager: `${item.reportingManager?(item.reportingManager.first_name):(null)} ${item.reportingManager?(item.reportingManager.last_name):(null)}`
+				
 			};
 		});
 	};
-
 	const displayingStaticData = () => {
 
 		const employees = resultTemp.rows;
@@ -708,11 +700,8 @@ const Employee = () => {
 		try {
 			const response = await fetch('http://SAJAL-GARG:3001/boston/data/employees');
 			const result = await response.json();
-			// console.log(JSON.stringify(result)); 
 			const employees = result.rows;
-
 			getApiDataOperation(employees);
-
 
 		} catch (error) {
 			console.log(error);
@@ -738,17 +727,13 @@ const Employee = () => {
 		}
 	}, [newEmployee.team, Data]);
 
-	const filteredData = Array.isArray(Data)
-		? Data.filter((item) => `${item.first_name} ${item.last_name} ${item.employeement_type} ${item.vendor.name}${item.SubTeam.Team.name}${item.SubTeam.name}${item.job_location}${item.work_mode}${item.cost_center.cost_center}`.toLowerCase().includes(searchText.toLowerCase()))
-		: [];
+
 
 	const [editMode, setEditMode] = useState(false);
 
 	const editEmployee = (index) => {
-		// alert(JSON.stringify(Data[index]))
 		setIndex(index)
-		const employee = filteredData[index]
-		console.log(employee)
+		const employee = filteredData[index];
 		setNewEmployee({
 			employee_id: employee.employee_id,
 			first_name: employee.first_name,
@@ -756,6 +741,7 @@ const Employee = () => {
 			employeement_type: employee.employeement_type,
 			designation: employee.designation.name,
 			reporting_manager: employee.reportingManager ? `${employee.reportingManager.first_name} ${employee.reportingManager.last_name}` : 'N.A.',
+			functional_head: employee.functional_head.name,
 			vendor: employee.vendor.name,
 			team: employee.SubTeam.Team.name,
 			sub_team: employee.SubTeam.name,
@@ -771,8 +757,7 @@ const Employee = () => {
 
 	const SaveEmployee = () => {
 		if (editMode) {
-			handleEditEmployee(newEmployee)
-			// console.log(newEmployee)
+			handleEditEmployee(newEmployee);
 		} else {
 			handleAddEmployee();
 		}
@@ -784,11 +769,8 @@ const Employee = () => {
 
 	const DeleteEmployee = () => {
 		if (editMode) {
-			// handleDeleteEmployee(newEmployee);
 			setConfirmationText("Are you sure you want to remove this employee");
 			setConfirmationVisible(true);
-
-			// console.log(newEmployee)
 		} else {
 			handleAddEmployee();
 		}
@@ -804,6 +786,7 @@ const Employee = () => {
 			employeement_type: '',
 			designation: '',
 			reporting_manager: '',
+			functional_head: '',
 			vendor: '',
 			team: '',
 			sub_team: '',
@@ -823,7 +806,6 @@ const Employee = () => {
 
 	const excel = () => {
 		const transformedXlData = transformXLData(filteredData);
-		console.log(filteredData)
 		exportToExcel(transformedXlData, "Excel file");
 	}
 	const handleFileExcelPress = () => {
@@ -832,7 +814,16 @@ const Employee = () => {
 
 	const bool = !newEmployee.cost_center || !newEmployee.designation || !newEmployee.employee_id || !newEmployee.employeement_type
 		|| !newEmployee.first_name || !newEmployee.gender || !newEmployee.job_level || !newEmployee.last_name || !newEmployee.sub_team
-		|| !newEmployee.team || !newEmployee.vendor || !newEmployee.work_mode || !newEmployee.location || !newEmployee.reporting_manager;
+		|| !newEmployee.team || !newEmployee.vendor || !newEmployee.work_mode || !newEmployee.location || !newEmployee.reporting_manager || !newEmployee.functional_head;
+
+	const filterDebug = () => {
+		setSearchText;
+	}
+
+	const filteredData = Array.isArray(Data) ? Data.filter((item) => `${item.first_name} ${item.last_name}
+	 ${item.employeement_type} ${item.vendor.name}${item.SubTeam.Team.name}${item.SubTeam.name}
+	 ${item.job_location}${item.work_mode}
+	 ${item.cost_center.cost_center}`.toLowerCase().includes(searchText.toLowerCase())) : [];
 
 	return (
 		<Provider>
@@ -843,6 +834,7 @@ const Employee = () => {
 
 				<Searchbar style={styles.searchBar}
 					value={searchText}
+					iconColor="black"
 					inputStyle={styles.searchBarInput}
 					onChangeText={setSearchText}
 					placeholder="Search with any filter"
@@ -1142,6 +1134,24 @@ const Employee = () => {
 										</Picker>
 									</View>
 								</View>
+
+								<View style={styles.inputContainer}>
+									<Text style={isDesktop ? styles.deskuser : styles.user}>Functional Head</Text>
+									<View>
+										<Picker
+											selectedValue={newEmployee.functional_head}
+											style={isDesktop ? styles.deskpicker : styles.picker}
+											onValueChange={(text) => setNewEmployee({ ...newEmployee, functional_head: text })}
+										>
+											<Picker.Item label="Choose Functional Head" value="" />
+											{head.map((head, index) => (
+												<Picker.Item key={index} label={head} value={head} />
+											))}
+										</Picker>
+									</View>
+								</View>
+
+
 							</View>
 
 							<View style={isDesktop ? styles.dekbuttoncontainer : styles.buttonContainer}>
@@ -1162,7 +1172,7 @@ const Employee = () => {
 								</View>
 							</View>
 
-							<View style={isDesktop?(styles.DeleteButton):(styles.DeleteButtonMobile)} >
+							<View style={isDesktop ? (styles.DeleteButton) : (styles.DeleteButtonMobile)} >
 								<View style={editMode ? (isDesktop ? styles.deskbuttonwrapperDelete : styles.buttonWrapper) : (styles.hidden)}>
 
 									<TouchableOpacity style={editMode ? (isDesktop ? styles.deskbutton : styles.button) : (styles.hidden)} onPress={DeleteEmployee}>
@@ -1190,20 +1200,35 @@ const Employee = () => {
 const styles = StyleSheet.create({
 	DeleteButton: {
 		// backgroundColor:'red',
-		
+
 		marginTop: getPercentageWidth(5, height),
 		justifyContent: 'center',
 		alignItems: 'center'
 
 	},
 	DeleteButtonMobile: {
-		marginLeft:-10,
+		marginLeft: -10,
 		// backgroundColor:'red',
 		marginTop: getPercentageWidth(0, height),
-		marginBottom:10,
+		marginBottom: 10,
 		justifyContent: 'center',
 		alignItems: 'center'
+	},
+	clearButton: {
+		backgroundColor: '#086A96',
+		borderRadius: 5,
+		height: 25,
+		marginBottom: 20,
+		paddingHorizontal: 10,
+		borderRadius: 5,
+		marginLeft: getPercentageWidth(1, width),
+		borderWidth: 1,
+		width: getPercentageWidth(8, width)
 
+	},
+	clearButtonText: {
+		color: 'white',
+		fontWeight: 'bold',
 	},
 	hidden: {
 		width: 0,
@@ -1238,7 +1263,9 @@ const styles = StyleSheet.create({
 	inputRow1: {
 		flexDirection: 'row',
 		marginBottom: 10,
-		width: getPercentageWidth(50, width)
+		width: getPercentageWidth(75, width),
+		// backgroundColor:"blue"
+
 	},
 	layout: {
 		backgroundColor: '#f9f9f9',
@@ -1368,7 +1395,7 @@ const styles = StyleSheet.create({
 		marginBottom: 1,
 	},
 	searchBarInput: {
-		fontSize: 16, paddingBottom: 15
+		fontSize: 16, paddingBottom: 15, color: "black"
 	},
 	searchBar: {
 		backgroundColor: "white",
@@ -1451,6 +1478,18 @@ const styles = StyleSheet.create({
 		backgroundColor: "white",
 		borderWidth: 1,
 		width: getPercentageWidth(20, width)
+	},
+	deskpickerFilter: {
+		height: 25,
+		fontSize: 12,
+		color: "black",
+		marginBottom: 20,
+		paddingHorizontal: 10,
+		borderRadius: 5,
+		marginLeft: getPercentageWidth(1, width),
+		backgroundColor: "white",
+		borderWidth: 1,
+		width: getPercentageWidth(10, width)
 	},
 	editButton: {
 		backgroundColor: "grey",

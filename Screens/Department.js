@@ -1,4 +1,3 @@
-// import React from 'react';
 import React, { useRef } from 'react';
 
 import { Table, TableWrapper, Row, Rows, Col } from 'react-native-table-component';
@@ -17,7 +16,6 @@ import {
 } from 'react-native';
 import { Divider, Searchbar } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-// import { useNavigation } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 import { useState, useEffect } from 'react';
 import DivisionData from './Alerts/employeeByDivision';
@@ -51,14 +49,11 @@ const Department = () => {
             Data.designation.name,
             Data.reportingManager ? `${Data.reportingManager.first_name} ${Data.reportingManager.last_name}` : 'N.A',
             Data.vendor.name,
-            // Data.SubTeam.Team.name,
-            // Data.SubTeam.name,
             Data.job_location,
             Data.work_mode,
             Data.job_level,
             Data.cost_center.cost_center,
             Data.gender,
-            // Data.SubTeam.Team.active
         ];
         
 
@@ -88,8 +83,6 @@ const Department = () => {
         const toggleExpand = () => {
             setExpanded(!expanded);
         };
-
-        //item.designation.name.length > 20
         const truncatedDesignation = false
             ? item.designation.name.slice(0, 30) + '...'
             : item.designation.name;
@@ -298,7 +291,6 @@ const styles = StyleSheet.create({
         flexDirection: 'column',
         marginHorizontal: 12,
         justifyContent: 'center',
-        // alignItems: 'center',
         backgroundColor: 'white',
         padding: 10,
         borderBottomWidth: 1,
@@ -479,7 +471,6 @@ const styles = StyleSheet.create({
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        // borderWidth:2
     },
     containerDex: {
         flex: 1,

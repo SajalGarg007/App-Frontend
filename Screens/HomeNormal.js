@@ -4,10 +4,13 @@ import Department from './Department';
 import Statistics from './Statistics';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { TouchableOpacity, StyleSheet,Dimensions, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Entypo } from '@expo/vector-icons';
+
+const { width, height } = Dimensions.get('window');
+const isDesktop = width >= 768;
 
 const Tab = createBottomTabNavigator()
 const HomeScreen = () => {
@@ -23,7 +26,7 @@ const HomeScreen = () => {
 
             <Tab.Navigator initialRouteName="Home" detachInactiveScreens={false}
                 screenOptions={{
-                    headerShown: true, tabBarActiveTintColor: 'black',
+                    headerShown: isDesktop? false:true, tabBarActiveTintColor: 'black',
                     tabBarInactiveTintColor: 'grey',
                     tabBarStyle: { backgroundColor: 'white' },
                     headerStyle: { backgroundColor: 'white' },
@@ -49,11 +52,11 @@ const HomeScreen = () => {
                     }} />
             </Tab.Navigator>
 
-            <TouchableOpacity style={styles.HeaderIcon} onPress={Jump}>
+            {/* <TouchableOpacity style={styles.HeaderIcon} onPress={Jump}>
                 <MaterialCommunityIcons name="account-circle-outline" size={40} color="black" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
 
-            <Text style={styles.HeaderUser}>Welcome Sanjeev!</Text>
+            <Text style={styles.HeaderUser}>{isDesktop?"":"Welcome User!"}</Text>
 
         </SafeAreaView>
 
