@@ -1,6 +1,6 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "./Screens/HomeAnimated"
+import HomeScreen from "./Screens/HomeNormal"
 import Login from "./Screens/Login";
 import Profile from "./Screens/Profile";
 
